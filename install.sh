@@ -97,10 +97,11 @@ echo -e "${GREEN}Installation complete!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo
 echo "Next steps:"
-echo "1. Log out and back in for extensions to be registered"
+echo "1. Privileged system setup (required for key remapping):"
+echo "   sudo bash $SCRIPT_DIR/setup-system.sh"
+echo "   Then log out and back in (group membership takes effect only on new session)"
 echo "2. In GNOME Settings → Extensions, enable both extensions:"
 echo "   - xremap@k0kubun.com"
 echo "   - macos-keybindings@kguenel.github.io"
 echo "3. Use the extension toggle switch to enable/disable macOS keybindings"
-echo
 echo "For more information, see: $SCRIPT_DIR/README.md"
