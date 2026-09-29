@@ -1,0 +1,19 @@
+[Unit]
+Description=macOS-style keyboard shortcuts with xremap
+Documentation=https://github.com/xremap/xremap
+After=graphical-session.target
+PartOf=graphical-session.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+# Check extension readiness even when no window has focus after login.
+ExecStartPre=/usr/bin/busctl --user --timeout=2s call org.gnome.Shell /com/k0kubun/Xremap com.k0kubun.Xremap WMClasses
+ExecStart=/usr/bin/xremap --mouse --watch=device,config --no-window-logging --allow-launch=false %h/.config/xremap/config.yml
+Restart=on-failure
+RestartSec=1
+StandardOutput=null
+StandardError=journal
+
+[Install]
+WantedBy=graphical-session.target

@@ -1,0 +1,11 @@
+{
+    "uuid": "macos-keybindings@kguenel.github.io",
+    "name": "macOS Keybindings",
+    "description": "Toggle macOS-style keyboard shortcuts with xremap. Requires xremap-gnome extension and distro-packaged xremap binary.",
+    "version": "1.0.0",
+    "type": "extension",
+    "author": "kguenel",
+    "license": "MIT",
+    "shell-version": ["44", "45", "46", "47", "48", "49", "50"],
+    "settings-schema": "org.gnome.shell.extensions.macos-keybindings"
+}

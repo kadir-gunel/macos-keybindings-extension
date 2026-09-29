@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="macos-keybindings">
+    <schema id="org.gnome.shell.extensions.macos-keybindings" path="/org/gnome/shell/extensions/macos-keybindings/">
+        <key name="enabled" type="b">
+            <default>false</default>
+            <summary>Enable macOS keybindings</summary>
+            <description>Toggle macOS-style keyboard shortcuts via xremap</description>
+        </key>
+        <key name="show-toast" type="b">
+            <default>true</default>
+            <summary>Show notification on toggle</summary>
+            <description>Show a desktop notification when toggling keybindings on/off</description>
+        </key>
+    </schema>
+</schemalist>

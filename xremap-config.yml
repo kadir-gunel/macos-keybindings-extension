@@ -1,0 +1,110 @@
+# macOS-style keybindings for GNOME (xremap)
+# No 'modmap' section: an Apple Magic Keyboard already sends Command as
+# Super_L and Option as Alt_L, so swapping them would invert the keys.
+# Allow Wayland applications to register modifiers before synthetic clicks.
+throttle_ms: 10
+
+keymap:
+  # Requires --mouse in xremap.service; regular mice only, not touchpads.
+  - name: Browser Command-click
+    application:
+      only: [google-chrome, Google-chrome, chromium, Chromium, microsoft-edge, Microsoft-edge, firefox, org.mozilla.firefox]
+    exact_match: true
+    remap:
+      Super-BTN_LEFT: Ctrl-BTN_LEFT
+      Super-Shift-BTN_LEFT: Ctrl-Shift-BTN_LEFT
+
+  # Keep native F2 rename, Return activation, and Spacebar preview.
+  - name: Finder-style Files shortcuts
+    application:
+      only: [org.gnome.Nautilus, Nautilus, nautilus]
+    exact_match: true
+    remap:
+      Super-BTN_LEFT: Ctrl-BTN_LEFT
+      Super-Down: Ctrl-o
+      Super-Up: Alt-Up
+      Super-BackSpace: Delete
+      Super-Shift-g: Ctrl-l
+
+  - name: Ghostty quit application
+    application:
+      only: com.mitchellh.ghostty
+    exact_match: true
+    remap:
+      Super-q: Ctrl-Shift-q
+
+  # Chrome 152 has no quit accelerator. Use its English E&xit menu item.
+  - name: Chrome quit application
+    application:
+      only: [google-chrome, Google-chrome, chromium, Chromium]
+    exact_match: true
+    remap:
+      Super-q: [Alt-f, { sleep: 150 }, x]
+
+  # GNOME native capture: full screen or interactive area selection.
+  - name: macOS screenshot shortcuts
+    exact_match: true
+    remap:
+      Super-Shift-KEY_3: Shift-KEY_SYSRQ
+      Super-Shift-KEY_4: KEY_SYSRQ
+
+  # Terminal clipboard shortcuts differ from graphical applications.
+  - name: Terminal shortcuts
+    application:
+      only: &terminals
+        - /(?i)(ghostty|kitty|alacritty|wezterm|gnome-terminal|org\.gnome\.(Console|Ptyxis|Terminal)|ptyxis|konsole|xfce4-terminal|tilix|terminator|foot|xterm)/
+    remap:
+      Super-c: Ctrl-Shift-c
+      Super-v: Ctrl-Shift-v
+      Super-t: Ctrl-Shift-t
+      Super-n: Ctrl-Shift-n
+      Super-w: Ctrl-Shift-w
+      Super-f: Ctrl-Shift-f
+      Super-a: Ctrl-Shift-a
+      Super-Left: Home
+      Super-Right: End
+      Alt-Left: Alt-b
+      Alt-Right: Alt-f
+      Alt-BackSpace: Ctrl-w
+      Super-BackSpace: Ctrl-u
+
+  - name: Standard desktop application quit
+    application:
+      not: *terminals
+    exact_match: true
+    remap:
+      Super-q: Ctrl-q
+
+  # Exclude terminals from shortcuts that would send shell control codes.
+  - name: macOS application shortcuts
+    application:
+      not: *terminals
+    remap:
+      Super-c: Ctrl-c
+      Super-v: Ctrl-v
+      Super-x: Ctrl-x
+      Super-a: Ctrl-a
+      Super-z: Ctrl-z
+      Super-Shift-z: Ctrl-Shift-z
+      Super-s: Ctrl-s
+      Super-f: Ctrl-f
+      Super-n: Ctrl-n
+      Super-o: Ctrl-o
+      Super-p: Ctrl-p
+      Super-t: Ctrl-t
+      Super-w: Ctrl-w
+      Super-l: Ctrl-l
+      Super-r: Ctrl-r
+      Super-Left: Home
+      Super-Right: End
+      Super-Up: Ctrl-Home
+      Super-Down: Ctrl-End
+      Alt-Left: Ctrl-Left
+      Alt-Right: Ctrl-Right
+      Alt-BackSpace: Ctrl-BackSpace
+      Alt-Delete: Ctrl-Delete
+      Super-BackSpace: [Shift-Home, BackSpace]
+
+# Cmd+Tab and Cmd+H use GNOME's existing Super shortcuts.
+# Shift is preserved for selection and application shortcuts.
+# Physical Ctrl retains its native behavior, including terminal Ctrl+C.
