@@ -70,8 +70,6 @@ echo
 echo -e "${YELLOW}[4/7] Setting up xremap config...${NC}"
 mkdir -p "$CONFIG_DIR"
 cp "$SCRIPT_DIR/xremap-config.yml" "$CONFIG_DIR/config.yml"
-echo -e "${YELLOW}Please edit $CONFIG_DIR/config.yml and set YOUR_KEYBOARD_NAME${NC}"
-read -p "Press Enter after editing the config file..."
 echo
 
 # Step 5: Setup systemd service
@@ -99,8 +97,10 @@ echo -e "${GREEN}Installation complete!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo
 echo "Next steps:"
-echo "1. Enable the extension in GNOME Tweaks > Extensions"
-echo "2. Make the extension auto-start in Tweaks > Startup Applications"
+echo "1. Log out and back in for extensions to be registered"
+echo "2. In GNOME Settings → Extensions, enable both extensions:"
+echo "   - xremap@k0kubun.com"
+echo "   - macos-keybindings@kguenel.github.io"
 echo "3. Use the extension toggle switch to enable/disable macOS keybindings"
 echo
 echo "For more information, see: $SCRIPT_DIR/README.md"
