@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-Give macOS-style keyboard shortcuts on GNOME Shell 45–50. The user turns the
+Give macOS-style keyboard shortcuts on GNOME Shell 50. The user turns the
 shortcuts on and off with one switch in the extension preferences.
 
 ## 2. Functional requirements
@@ -24,7 +24,7 @@ shortcuts on and off with one switch in the extension preferences.
 
 - NFR-1: The extension MUST work on Wayland and on X11.
 - NFR-2: The license MUST be GPL-3.0-or-later.
-- NFR-3: The code MUST use only GNOME Shell 45+ APIs.
+- NFR-3: The code MUST use only APIs that GNOME Shell 50 supports.
 
 ## 4. Problems and solutions
 
@@ -72,8 +72,8 @@ its solution.
 
 ## 6. Missing information
 
-- MI-1: GNOME Shell 50.5 is verified. GNOME Shell 45–49 are declared in
-  `metadata.json` but are not tested.
+- MI-1: GNOME Shell 50.5 is verified. GNOME Shell 50 is declared in
+  `metadata.json`. Other shell versions are not supported.
 - MI-2: The behaviour on X11 is not tested.
 - MI-3: No automated test exists. All tests are manual.
 - MI-4: The behaviour of a Bluetooth keyboard after a reconnect is not

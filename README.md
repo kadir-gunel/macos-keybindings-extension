@@ -24,7 +24,7 @@ application-specific rules.
 
 1. `xremap` binary built with GNOME support (Arch: `xremap-gnome-bin`).
    Verify with: `xremap --list-desktops` -> `This variant of xremap supports: GNOME`
-2. GNOME Shell 45-50.
+2. GNOME Shell 50.
 3. Your user in the `input` group, and write access to `/dev/uinput`.
 
 ## Install
