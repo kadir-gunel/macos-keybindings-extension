@@ -63,10 +63,17 @@ its solution.
 - Solution: Run `install.sh` after each source change. Compare the files with
   `md5sum`.
 
-## 5. Missing information
+## 5. Verified environment
 
-- MI-1: The minimum and maximum GNOME Shell versions are not tested. Only
-  GNOME Shell 50.5 is tested.
+- GNOME Shell 50.5 on Wayland: the extension loads (`State: ACTIVE`), the
+  preferences window opens without an error, and `Ctrl+A` / `Ctrl+E` give
+  line navigation. The user reported this result. A synthetic input device
+  reproduced it.
+
+## 6. Missing information
+
+- MI-1: GNOME Shell 50.5 is verified. GNOME Shell 45–49 are declared in
+  `metadata.json` but are not tested.
 - MI-2: The behaviour on X11 is not tested.
 - MI-3: No automated test exists. All tests are manual.
 - MI-4: The behaviour of a Bluetooth keyboard after a reconnect is not
