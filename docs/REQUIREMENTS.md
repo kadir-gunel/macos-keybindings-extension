@@ -3,7 +3,7 @@
 ## 1. Purpose
 
 Give macOS-style keyboard shortcuts on GNOME Shell 50. The user turns the
-shortcuts on and off with one switch in the extension preferences.
+shortcuts on and off with one switch in the quick settings menu.
 
 ## 2. Functional requirements
 
@@ -13,12 +13,15 @@ shortcuts on and off with one switch in the extension preferences.
   switch off.
 - FR-3: The extension MUST keep the service state equal to the stored switch
   value after a GNOME Shell restart.
-- FR-4: The extension MUST refuse to start the service when the `xremap`
-  binary or the `xremap@k0kubun.com` extension is absent. It MUST show a
-  message and set the switch to off.
+- FR-4: The extension MUST NOT start the service when the `xremap` binary or
+  the `xremap@k0kubun.com` extension is absent. It MUST show a message. It
+  MUST keep the stored value of the switch and MUST try again when the missing
+  part becomes available.
 - FR-5: The preferences window MUST open without an error.
 - FR-6: `xremap-config.yml` MUST give macOS-style shortcuts for graphical
   applications and MUST NOT change native terminal control keys.
+- FR-7: The extension MUST show a switch for `xremap.service` in the quick
+  settings menu.
 
 ## 3. Non-functional requirements
 
@@ -63,6 +66,33 @@ its solution.
 - Solution: Run `install.sh` after each source change. Compare the files with
   `md5sum`.
 
+### P-4: The extension switched itself off at the start of a session and after an unlock
+
+- Symptom: The switch was off at each start of the session, and the shortcuts
+  stopped after an unlock of the screen. The user had to open the preferences
+  and to switch on again.
+- Cause: `_enable()` cleared the preference `enabled` when a dependency was
+  absent. The shell enables the extensions one after the other. The companion
+  extension `xremap@k0kubun.com` is frequently not active yet when `enable()`
+  of this extension runs. The screen lock pushes the session mode
+  `unlock-dialog`. `Main.sessionMode.parentMode` is null in that mode, thus
+  `_extensionSupportsSessionMode()` returns false, the shell disables each
+  extension that does not name `unlock-dialog` in `session-modes`, and it
+  enables the extension again at the unlock. The same race starts again.
+- Solution: The extension keeps the preference of the user. It shows the
+  message only for a direct action of the user. It listens to the signal
+  `extension-state-changed` and tries again when the companion extension
+  becomes active.
+
+### P-5: The switch was not in the quick settings menu
+
+- Symptom: The user had to open the extension preferences to change the state
+  of the shortcuts.
+- Cause: The extension had no item in the quick settings menu.
+- Solution: Add a `QuickToggle` with a two-way binding to the key `enabled`,
+  and register it with
+  `Main.panel.statusArea.quickSettings.addExternalIndicator()`.
+
 ## 5. Verified environment
 
 - GNOME Shell 50.5 on Wayland: the extension loads (`State: ACTIVE`), the
@@ -75,6 +105,8 @@ its solution.
 - MI-1: GNOME Shell 50.5 is verified. GNOME Shell 50 is declared in
   `metadata.json`. Other shell versions are not supported.
 - MI-2: The behaviour on X11 is not tested.
-- MI-3: No automated test exists. All tests are manual.
+- MI-3: `tools/smoke-test.sh` covers the start, the dependency check, the
+  switch, and the lock and the unlock in a headless shell. Tests on hardware
+  are manual.
 - MI-4: The behaviour of a Bluetooth keyboard after a reconnect is not
   tested completely.

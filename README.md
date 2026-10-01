@@ -3,8 +3,9 @@
 A GNOME Shell extension plus xremap setup that gives you macOS-style
 keyboard shortcuts on GNOME (Wayland or X11).
 
-The extension adds a toggle switch. Turn it on to apply macOS shortcuts, turn
-it off to return to stock GNOME behavior.
+The extension adds a switch to the quick settings menu (the system menu) and to
+its preferences window. Turn it on to apply macOS shortcuts, turn it off to
+return to stock GNOME behavior.
 
 ## Architecture
 
@@ -74,9 +75,13 @@ copied extensions do not exist until you log out and back in once.
 
 ### 4. Turn it on
 
-Open the extension preferences and switch on **Enable macOS keybindings**.
-The toggle checks that the binary and the companion extension are present,
-then starts `xremap.service`.
+Open the system menu (the date and the icons in the top right corner) and switch
+on **macOS Keybindings**, or open the extension preferences and switch on
+**Enable macOS keybindings**. The switch checks that the binary and the
+companion extension are present, then starts `xremap.service`.
+
+If the companion extension is not active yet, the switch stays on and the
+extension starts the service as soon as the companion extension is active.
 
 ## Keyboard note
 
