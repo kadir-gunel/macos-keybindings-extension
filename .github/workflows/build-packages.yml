@@ -1,0 +1,179 @@
+name: Build Packages
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - distro: archlinux
+            package_manager: pacman
+            package_type: arch
+          - distro: ubuntu
+            package_manager: deb
+            package_type: deb
+          - distro: fedora
+            package_manager: rpm
+            package_type: rpm
+
+    container:
+      image: ${{ matrix.distro }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          if [ "${{ matrix.distro }}" = "archlinux" ]; then
+            pacman -Syu --needed --noconfirm base-devel shellcheck
+          elif [ "${{ matrix.distro }}" = "ubuntu" ]; then
+            apt-get update
+            apt-get install -y build-essential shellcheck
+          elif [ "${{ matrix.distro }}" = "fedora" ]; then
+            dnf install -y @development-tools shellcheck
+          fi
+
+      - name: Download GNOME Shell extensions schema
+        run: |
+          wget -q https://gitlab.gnome.org/GNOME/gnome-shell/-/raw/main/data/org.gnome.shell.Extensions.gschema.xml \
+            -O schemas/org.gnome.shell.Extensions.gschema.xml
+
+      - name: Build Arch package
+        if: matrix.distro == 'archlinux'
+        run: |
+          ARCHPKG_VERSION=$(echo ${{ github.ref_name }} | sed 's/v//')
+          mkdir -p build/arch
+          cd build/arch
+          cat > PKGBUILD << 'EOF'
+          pkgname=macos-keybindings-extension
+          pkgver="${ARCHPKG_VERSION}"
+          pkgrel=1
+          pkgdesc="macOS-style keyboard shortcuts for GNOME Shell"
+          arch=(x86_64)
+          url="https://github.com/kadir-gunel/macos-keybindings-extension"
+          license=('GPL-3.0-or-later')
+          depends=('gnome-shell>=51.0')
+          makedepends=('git')
+          source=("${pkgname}-${pkgver}.tar.gz"::"https://github.com/kadir-gunel/macos-keybindings-extension/archive/refs/tags/${pkgver}.tar.gz")
+          sha256sums=SKIP
+
+          prepare() {
+            cd "${pkgname}-${pkgver}"
+            find . -name '*.js' -exec shellcheck -x {} +
+          }
+
+          package() {
+            cd "${pkgname}-${pkgver}"
+            install -d "${pkgdir}/usr/share/gnome-shell/extensions/${pkgname}"
+            cp -r * "${pkgdir}/usr/share/gnome-shell/extensions/${pkgname}"
+            install -Dm644 schemas/*.xml "${pkgdir}/usr/share/glib-2.0/schemas/"
+            glib-compile-schemas "${pkgdir}/usr/share/glib-2.0/schemas/"
+          }
+          EOF
+          makepkg -f --noconfirm
+          cp *.pkg.tar.zst ../
+
+      - name: Build DEB package
+        if: matrix.distro == 'ubuntu'
+        run: |
+          DEB_VERSION=$(echo ${{ github.ref_name }} | sed 's/v//')
+          DEB_VERSION_NUMBER=$(echo $DEB_VERSION | sed 's/-/.0./')
+          DEB_REVISION=1
+          mkdir -p build/deb/DEBIAN build/deb/usr/share/gnome-shell/extensions
+          cd build/deb
+
+          cat > DEBIAN/control << EOF
+          Package: macos-keybindings-extension
+          Version: ${DEB_VERSION_NUMBER}${DEB_REVISION}
+          Section: gnome
+          Priority: optional
+          Architecture: amd64
+          Depends: gnome-shell (>= 51.0)
+          Maintainer: kadir-gunel <kadirgunel@icloud.com>
+          Description: macOS-style keyboard shortcuts for GNOME Shell
+           This extension adds macOS-style keyboard shortcuts to GNOME Shell.
+           It uses xremap to perform the actual key remapping.
+          EOF
+
+          cp -r ../files/* usr/share/gnome-shell/extensions/
+          cp ../schemas/*.xml usr/share/glib-2.0/schemas/
+          glib-compile-schemas usr/share/glib-2.0/schemas/
+
+          # Create tarball
+          tar -czf ../data.tar.gz -C usr .
+          gzip -9 ../data.tar.gz
+
+          # Create control tarball
+          tar -czf ../control.tar.gz -C DEBIAN control
+
+          # Create debian-binary
+          echo "2.0" > ../debian-binary
+
+          # Build package
+          dpkg-deb -Zgzip -Zbest --build .
+          cp *.deb ../
+
+      - name: Build RPM package
+        if: matrix.distro == 'fedora'
+        run: |
+          RPM_VERSION=$(echo ${{ github.ref_name }} | sed 's/v//')
+          mkdir -p build/rpm/SOURCES build/rpm/SPECS
+          cd build/rpm
+
+          cat > SPECS/macos-keybindings-extension.spec << EOF
+          Name:           macos-keybindings-extension
+          Version:        ${RPM_VERSION}
+          Release:        1%{?dist}
+          Summary:        macOS-style keyboard shortcuts for GNOME Shell
+
+          License:        GPL-3.0-or-later
+          URL:            https://github.com/kadir-gunel/macos-keybindings-extension
+          Source0:        %{name}-%{version}.tar.gz
+
+          BuildArch:      noarch
+          Requires:       gnome-shell >= 51.0
+
+          %description
+          This extension adds macOS-style keyboard shortcuts to GNOME Shell.
+          It uses xremap to perform the actual key remapping.
+
+          %prep
+          %autosetup
+
+          %build
+          %check
+          find . -name '*.js' -exec shellcheck -x {} +
+
+          %install
+          mkdir -p %{buildroot}/usr/share/gnome-shell/extensions/%{name}
+          cp -r * %{buildroot}/usr/share/gnome-shell/extensions/%{name}/
+          mkdir -p %{buildroot}/usr/share/glib-2.0/schemas/
+          cp schemas/*.xml %{buildroot}/usr/share/glib-2.0/schemas/
+          glib-compile-schemas %{buildroot}/usr/share/glib-2.0/schemas/
+
+          %files
+          %doc README.md
+          %license LICENSE
+          %{_datadir}/gnome-shell/extensions/%{name}
+          %{_datadir}/glib-2.0/schemas/org.gnome.shell.extensions.macos-keybindings.gschema.xml
+
+          %changelog
+          EOF
+
+          tar -czf SOURCES/%{name}-%{version}.tar.gz -C .. ..
+          rpmbuild -bb SPECS/macos-keybindings-extension.spec
+          cp RPMS/noarch/*.rpm ../
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.distro }}-package
+          path: build/*/*.${{ matrix.package_type }}
+          retention-days: 30
