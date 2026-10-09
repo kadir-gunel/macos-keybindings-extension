@@ -15,12 +15,15 @@ jobs:
           - distro: archlinux
             package_manager: pacman
             package_type: arch
+            package_name: macos-keybindings-extension
           - distro: ubuntu
             package_manager: deb
             package_type: deb
+            package_name: macos-keybindings-extension
           - distro: fedora
             package_manager: rpm
             package_type: rpm
+            package_name: macos-keybindings-extension
 
     container:
       image: ${{ matrix.distro }}
@@ -106,17 +109,13 @@ jobs:
           cp ../schemas/*.xml usr/share/glib-2.0/schemas/
           glib-compile-schemas usr/share/glib-2.0/schemas/
 
-          # Create tarball
           tar -czf ../data.tar.gz -C usr .
           gzip -9 ../data.tar.gz
 
-          # Create control tarball
           tar -czf ../control.tar.gz -C DEBIAN control
 
-          # Create debian-binary
           echo "2.0" > ../debian-binary
 
-          # Build package
           dpkg-deb -Zgzip -Zbest --build .
           cp *.deb ../
 
@@ -171,9 +170,19 @@ jobs:
           rpmbuild -bb SPECS/macos-keybindings-extension.spec
           cp RPMS/noarch/*.rpm ../
 
+      - name: Upload packages to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/*/*.${{ matrix.package_type }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.distro }}-package
           path: build/*/*.${{ matrix.package_type }}
-          retention-days: 30
+          retention-days: 7
