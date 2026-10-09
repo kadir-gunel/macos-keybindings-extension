@@ -21,11 +21,16 @@ xremap works at the kernel `evdev`/`uinput` level, so it does not care whether
 you run Wayland or X11. The companion extension is needed only for
 application-specific rules.
 
+The extension source has three modules: `extension.js` holds the entry point and
+the quick settings UI, `serviceManager.js` keeps the service state equal to the
+stored preference, and `systemdUnit.js` controls the user unit over the systemd
+D-Bus API.
+
 ## Requirements
 
 1. `xremap` binary built with GNOME support (Arch: `xremap-gnome-bin`).
    Verify with: `xremap --list-desktops` -> `This variant of xremap supports: GNOME`
-2. GNOME Shell 50.
+2. GNOME Shell 51.
 3. Your user in the `input` group, and write access to `/dev/uinput`.
 
 ## Install

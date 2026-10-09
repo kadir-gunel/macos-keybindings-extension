@@ -32,7 +32,7 @@ echo
 # Step 1: Install the extension
 echo -e "${YELLOW}[1/7] Installing extension...${NC}"
 mkdir -p "$EXTENSION_DIR/schemas"
-cp "$SCRIPT_DIR/extension.js" "$SCRIPT_DIR/prefs.js" "$SCRIPT_DIR/metadata.json" "$EXTENSION_DIR/"
+cp "$SCRIPT_DIR"/*.js "$SCRIPT_DIR/metadata.json" "$EXTENSION_DIR/"
 cp "$SCRIPT_DIR/schemas/"*.xml "$EXTENSION_DIR/schemas/"
 glib-compile-schemas "$EXTENSION_DIR/schemas"
 echo -e "${GREEN}✓ Extension installed${NC}"

@@ -10,8 +10,8 @@
 #  - the shell uses a private keyfile GSettings backend.
 #
 # Because the companion extension is absent, the extension stops at the
-# dependency check and never calls systemctl. The service of the user is
-# therefore untouched.
+# dependency check and never starts or stops the unit over the systemd D-Bus
+# API. The service of the user is therefore untouched.
 #
 # The test covers the two faults of issue 1.0.2:
 #  - the extension cleared the preference 'enabled' when the companion
@@ -40,7 +40,7 @@ mkdir -p "$XDG_DATA_HOME/gnome-shell/extensions" "$XDG_CONFIG_HOME/glib-2.0/sett
 
 EXT="$XDG_DATA_HOME/gnome-shell/extensions/$UUID"
 mkdir -p "$EXT/schemas"
-cp "$SRC/extension.js" "$SRC/prefs.js" "$SRC/metadata.json" "$EXT/"
+cp "$SRC"/*.js "$SRC/metadata.json" "$EXT/"
 cp "$SRC"/schemas/*.xml "$EXT/schemas/"
 glib-compile-schemas "$EXT/schemas" || { echo "FAIL: the schema did not compile"; exit 1; }
 

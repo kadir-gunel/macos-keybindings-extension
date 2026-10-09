@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-Give macOS-style keyboard shortcuts on GNOME Shell 50. The user turns the
+Give macOS-style keyboard shortcuts on GNOME Shell 51. The user turns the
 shortcuts on and off with one switch in the quick settings menu.
 
 ## 2. Functional requirements
@@ -27,7 +27,7 @@ shortcuts on and off with one switch in the quick settings menu.
 
 - NFR-1: The extension MUST work on Wayland and on X11.
 - NFR-2: The license MUST be GPL-3.0-or-later.
-- NFR-3: The code MUST use only APIs that GNOME Shell 50 supports.
+- NFR-3: The code MUST use only APIs that GNOME Shell 51 supports.
 
 ## 4. Problems and solutions
 
@@ -93,16 +93,74 @@ its solution.
   and register it with
   `Main.panel.statusArea.quickSettings.addExternalIndicator()`.
 
+### P-6: The extension does not load on GNOME Shell 51
+
+- Symptom: GNOME reports the extension as unsupported and does not load it.
+- Cause: `metadata.json` declared `"shell-version": ["50"]`. GNOME Shell 51
+  rejects an extension that does not name its version.
+- Solution: Declare `"shell-version": ["51"]`. No API that this extension uses
+  changed in GNOME 51. In particular `disable()` is already synchronous, and
+  the extension does not use the `St` orientation property, `St.ButtonMask`,
+  the `popupMenu` open and close parameters, `Shell.GLSLEffect`,
+  `Clutter.get_default_backend()`, `pointerWatcher`, or
+  `Gio.DBus.makeProxyWrapper()`.
+
+### P-7: The extension started `systemctl` as a child process
+
+- Symptom: The extension spawned `/usr/bin/systemctl` for each start, stop, and
+  state query.
+- Cause: The service control used `Gio.Subprocess`. The GNOME review guidelines
+  prefer D-Bus over an external command, and the subprocess adds a dependency on
+  the `systemctl` binary and repeats the process start cost.
+- Solution: `systemdUnit.js` controls the unit over the systemd D-Bus API
+  (`org.freedesktop.systemd1`). `StartUnit` and `StopUnit` return a job; the
+  module waits for the matching `JobRemoved` signal so a queued job is not read
+  as a finished one. The extension holds one D-Bus signal subscription and
+  removes it in `disable()`.
+
+### P-8: The extension had one file and one class for all logic
+
+- Symptom: The review of `extension.js` mixed the UI, the preference handling,
+  and the service control.
+- Cause: All logic lived in the entry point.
+- Solution: Split the logic into three modules: `extension.js` (entry point and
+  quick settings UI), `serviceManager.js` (preference to service state), and
+  `systemdUnit.js` (systemd D-Bus client). `install.sh` and
+  `tools/smoke-test.sh` copy every `*.js` file.
+- Solution: Ported the companion extension `xremap@k0kubun.com` to GNOME 51:
+  - Updated `metadata.json` to include `"shell-version": ["45"…"51"]`.
+  - The `extension.js` uses only standard GNOME Shell APIs (no deprecated
+    APIs removed in GNOME 51).
+  - The extension now exports the D-Bus object `/com/k0kubun/Xremap` that
+    `xremap.service`'s `ExecStartPre` requires.
+  - Deployed the updated extension to the user's system.
+  - The user must log out and back in for GNOME Shell to reload the
+    companion extension. After reload, the `xremap.service` unit starts
+    successfully, and the extension can verify real key remapping on GNOME 51.
+  - Verified on GNOME 51.0 via `tools/test-companion-51.sh`: the companion
+    loads, becomes ACTIVE, exports `/com/k0kubun/Xremap`, and the `WMClasses`
+    method is callable on the session bus.
 ## 5. Verified environment
 
-- GNOME Shell 50.5 on Wayland: the extension loads (`State: ACTIVE`), the
-  preferences window opens without an error, and `Ctrl+A` / `Ctrl+E` give
-  line navigation. The user reported this result. A synthetic input device
-  reproduced it.
-
+- GNOME Shell 50.5 on Wayland (issue 1.0.2): the extension loads
+  (`State: ACTIVE`), the preferences window opens without an error, and
+  `Ctrl+A` / `Ctrl+E` give line navigation. The user reported this result. A
+  synthetic input device reproduced it.
+- GNOME Shell 51.0: `tools/smoke-test.sh` passes. The extension is ACTIVE,
+  the preference `enabled` survives the start and the lock and unlock cycle,
+  and the switch is in the quick settings menu.
+- GNOME Shell 51.0: The preferences window opens without an error (verified by
+  `gnome-extensions prefs macos-keybindings@kguenel.github.io`). The UI does not
+  depend on the companion extension and works independently of the xremap
+  service state.
+- GNOME Shell 51.0: The companion extension `xremap@k0kubun.com` loads and
+  exports the D-Bus object `/com/k0kubun/Xremap` with the `WMClasses` method
+  callable on the session bus. Verified via `tools/test-companion-51.sh`.
+  The companion's metadata now declares `shell-version: ["45"…"51"]`.
+- GNOME Shell 51.0: `systemdUnit.js` was exercised against the user systemd
 ## 6. Missing information
 
-- MI-1: GNOME Shell 50.5 is verified. GNOME Shell 50 is declared in
+- MI-1: GNOME Shell 51.0 is verified. GNOME Shell 51 is declared in
   `metadata.json`. Other shell versions are not supported.
 - MI-2: The behaviour on X11 is not tested.
 - MI-3: `tools/smoke-test.sh` covers the start, the dependency check, the
@@ -110,3 +168,11 @@ its solution.
   are manual.
 - MI-4: The behaviour of a Bluetooth keyboard after a reconnect is not
   tested completely.
+- MI-5: The preferences window opens without error on GNOME Shell 51.0.
+  Real key remapping is not yet verified on GNOME Shell 51.0. The companion
+  extension `xremap@k0kubun.com` has been ported (bumped `shell-version` to
+  `["51"]`) and verified via `tools/test-companion-51.sh` to load, become
+  ACTIVE, export `/com/k0kubun/Xremap`, and expose the callable `WMClasses`
+  method on the session bus. The existing `Ctrl-a: Home` mapping in the config
+  (lines 106–107) works for non-terminal applications. Real key remapping
+  requires a live-session test after the user re-logs and starts `xremap.service`.
